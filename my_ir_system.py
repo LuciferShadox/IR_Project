@@ -2,6 +2,8 @@ import argparse
 from utils import *
 from search import linear_search,inverted_search
 from stemming import PorterStemmer
+import time
+
 ORIGINAL_FOLDER_NAME = "collection_original"
 STOPWORD_FOLDER_NAME = "collection_no_stopwords"
 STOP_WORD_FILENAME = "englishST.txt"
@@ -52,6 +54,7 @@ def extract_collection(filename):
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--extract-collection",
@@ -91,7 +94,7 @@ if __name__ == "__main__":
         
     elif args.search_mode:
         search_mode = args.search_mode
-        if search_mode=="linear":
+        if search_mode:
             if args.model:
                 model = args.model
                 if model=="bool":
@@ -107,23 +110,28 @@ if __name__ == "__main__":
                         if query:
                             queries,operation = check_operation(query)
                             if type(queries) == list:
-                                document_query={}
-                                for search_query in queries:
-                                    documents = linear_search(document_path,search_query)
-                                    document_query[search_query]=documents
+                                document_query=[]
+                                if search_mode=="linear":
+                                    for search_query in queries:
+                                        documents = linear_search(document_path,search_query)
+                                        document_query.append(documents)
+                                elif search_mode=="inverted":
+                                    document_query = inverted_search(document_path,queries)
                                 if operation=="&":
-                                    documents =set(document_query[search_query]).intersection(*document_query.values())
+                                    documents =set(document_query[0]).intersection(*document_query)
                                 elif operation=="|":
-                                    documents =set().union(*document_query.values())
+                                    documents =set().union(*document_query)
                                 elif operation=="~":
                                     #get all documents
                                     all_document_names =get_all_document_names(ORIGINAL_FOLDER_NAME)
-                                    documents = zip(*document_query.values())
+                                    documents = zip(*document_query)
                                     documents = list(set(all_document_names)-set(documents))
 
                             else:
-                                documents = linear_search(document_path,query)
-                                # documents = inverted_search(document_path,)
+                                if search_mode=="linear":
+                                    documents = linear_search(document_path,query)
+                                elif search_mode=="inverted":
+                                    documents = inverted_search(document_path,[query])
                             
                             print_documents(documents)
                         else:
@@ -139,5 +147,10 @@ if __name__ == "__main__":
 
         else:
             print("No Search Mode specified / Invalid Search Mode Specified")
+
+    end_time = time.time()
+    execution_time = (end_time - start_time) * 1000
+    print(f"T:{execution_time} ms")
+
 
 

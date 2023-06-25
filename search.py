@@ -26,15 +26,15 @@ def inverted_search(collection_name, search_terms):
     results = []
     collection = read_collection(collection_name)
     inverted_index = build_inverted_index(collection_name)
-    matching_docs = set()
+    matching_docs = []
     for term in search_terms:
         if term in inverted_index:
-            matching_docs.update(inverted_index[term])
-    for filename in matching_docs:
-        document = collection.get(filename, [])
-        if all(term in document for term in search_terms):
-            results.append(filename)
-    return results
+            matching_docs.append(inverted_index[term])
+    # for filename in matching_docs:
+    #     document = collection.get(filename, [])
+    #     if all(term in document for term in search_terms):
+    #         results.append(filename)
+    return matching_docs
 
 def build_inverted_index(collection_name):
     inverted_index = {}

@@ -89,6 +89,8 @@ def check_operation(query):
 
 
 
+
+
 def get_all_document_names(folder_path):
     return os.listdir(folder_path)
 
