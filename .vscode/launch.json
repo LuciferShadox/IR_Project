@@ -11,7 +11,7 @@
             "program": "my_ir_system.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--query","fox|wolf","--model","bool","--search-mode","inverted","--documents","original"],
+            "args": ["--query","hunters","--model","bool","--search-mode","linear","--documents","original"],
         },
         
     ]

@@ -86,6 +86,38 @@ def check_operation(query):
     
     return query,None
 
+def load_ground_truth(filename):
+    ground_truth = {}
+    with open(filename, 'r') as file:
+        for line in file:
+            if line.startswith('#'):
+                continue
+            line = line.strip()
+            if line:
+                parts = line.split('-')
+                if len(parts) == 2:
+                    term, doc_ids = parts
+                    doc_ids = doc_ids.split(',')
+                    doc_ids_stripped = [idx.strip() for idx in doc_ids]
+                    ground_truth[term.strip()] = doc_ids_stripped
+                else:
+                    print(f"Ignoring invalid line in ground_truth.txt: {line}")
+    return ground_truth
+
+def calculate_precision_recall(documents, ground_truth,query):
+    retrieved_documents = []
+    #get index of documents
+    for document_name in documents:
+        retrieved_documents.append(document_name.split("_")[0])
+    retrieved_documents=set(retrieved_documents)
+    try:
+        relevant_documents = set(ground_truth[query])
+        common_documents = retrieved_documents.intersection(relevant_documents)
+        precision = len(common_documents) / len(retrieved_documents) if retrieved_documents else 0
+        recall = len(common_documents) / len(relevant_documents) if relevant_documents else 0
+        return precision, recall
+    except Exception as e:
+        return None,None
 
 
 

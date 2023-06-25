@@ -7,6 +7,8 @@ import time
 ORIGINAL_FOLDER_NAME = "collection_original"
 STOPWORD_FOLDER_NAME = "collection_no_stopwords"
 STOP_WORD_FILENAME = "englishST.txt"
+GROUND_TRUTH_FILE = "ground_truth.txt"
+
 
 
 def extract_collection(filename):
@@ -131,7 +133,7 @@ if __name__ == "__main__":
                                 if search_mode=="linear":
                                     documents = linear_search(document_path,query)
                                 elif search_mode=="inverted":
-                                    documents = inverted_search(document_path,[query])
+                                    documents = inverted_search(document_path,[query])[0]
                             
                             print_documents(documents)
                         else:
@@ -150,7 +152,11 @@ if __name__ == "__main__":
 
     end_time = time.time()
     execution_time = (end_time - start_time) * 1000
-    print(f"T:{execution_time} ms")
+     # Load ground truth
+    ground_truth = load_ground_truth(GROUND_TRUTH_FILE)
+    # Calculate precision and recall
+    precision, recall = calculate_precision_recall(documents, ground_truth,query)
+    print(f"T:{execution_time} ms P={precision},R={recall}")
 
 
 
