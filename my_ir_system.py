@@ -1,13 +1,13 @@
 import argparse
 from utils import *
-from search import linear_search,inverted_search
+from search import linear_search, inverted_search
 from stemming import PorterStemmer
 import time
 
 ORIGINAL_FOLDER_NAME = "collection_original"
 STOPWORD_FOLDER_NAME = "collection_no_stopwords"
 STOP_WORD_FILENAME = "englishST.txt"
-
+GROUND_TRUTH_FILE = "ground_truth.txt"
 
 def extract_collection(filename):
     file_handler = open(filename, "r+")
@@ -15,11 +15,10 @@ def extract_collection(filename):
     fable_count = 0
     fable_save_filename = None
     fable_text = ""
-    
+
     stop_word_list = get_file_contents(STOP_WORD_FILENAME)
     stop_word_list = [word[:-1] for word in stop_word_list]
-    
-    
+
     for count, line_text in enumerate(file_handler):
         # starting of the Article
         if count < 304:
@@ -34,11 +33,7 @@ def extract_collection(filename):
         if count_blank_lines == 3:
             if fable_save_filename:
                 save_fable(ORIGINAL_FOLDER_NAME, fable_save_filename, fable_text)
-                remove_stop_words(STOPWORD_FOLDER_NAME,
-                                  ORIGINAL_FOLDER_NAME,
-                                  fable_save_filename,
-                                  stop_word_list
-                                  )
+                remove_stop_words(STOPWORD_FOLDER_NAME, ORIGINAL_FOLDER_NAME, fable_save_filename, stop_word_list)
             fable_count += 1
             fable_save_filename = get_fable_save_file_name(fable_count, line_text)
 
@@ -52,6 +47,35 @@ def extract_collection(filename):
     save_fable(ORIGINAL_FOLDER_NAME, fable_save_filename, fable_text)
     file_handler.close()
 
+def load_ground_truth(filename):
+    ground_truth = {}
+    with open(filename, 'r') as file:
+        for line in file:
+            line = line.strip()
+            if line:
+                parts = line.split('-')
+                if len(parts) == 2:
+                    term, doc_ids = parts
+                    doc_ids = doc_ids.split(',')
+                    ground_truth[term] = doc_ids
+                else:
+                    print(f"Ignoring invalid line in ground_truth.txt: {line}")
+    return ground_truth
+
+
+
+def calculate_precision_recall(documents, ground_truth):
+    retrieved_documents = set()
+    for doc_list in documents:
+        retrieved_documents.update(doc_list)
+    relevant_documents = set()
+    for doc_ids in ground_truth.values():
+        relevant_documents.update(doc_ids)
+    common_documents = retrieved_documents.intersection(relevant_documents)
+    precision = len(common_documents) / len(retrieved_documents) if retrieved_documents else 0
+    recall = len(common_documents) / len(relevant_documents) if relevant_documents else 0
+    return precision, recall
+
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -62,45 +86,46 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--model",
-        help="Only \"bool\" is availble for now.",
+        help="Only \"bool\" is available for now.",
     )
     parser.add_argument(
         "--search-mode",
-        help="Only Linear mode is available \"linear\"(other modes will be implemented in a later task)",
+        help="Only Linear mode is available \"linear\" (other modes will be implemented in a later task)",
     )
     parser.add_argument(
         "--documents",
-        help='specifies the source documents for the search."original" / "no_stopwords"',
+        help='Specifies the source documents for the search. "original" / "no_stopwords"',
     )
     parser.add_argument(
-        "--stemming",action="store_true",
-        help='When used, specifies that words in query and documents should be stemmed.',
+        "--stemming",
+        action="store_true",
+        help='When used, specifies that words in the query and documents should be stemmed.',
     )
     parser.add_argument(
         "--query",
-        help='specifies the query text to search',
+        help="Specifies the query text to search",
     )
     args = parser.parse_args()
-    query =args.query
+    query = args.query
     # print(args.stemming)
     if args.stemming:
         ps = PorterStemmer()
         query = ps.stem(query)
-    
+
     if args.extract_collection:
         filename = args.extract_collection
         extract_collection(filename)
         exit()
-        
+
     elif args.search_mode:
         search_mode = args.search_mode
         if search_mode:
             if args.model:
                 model = args.model
-                if model=="bool":
+                if model == "bool":
                     if args.documents:
                         document = args.documents
-                        if document=="original":
+                        if document == "original":
                             document_path = ORIGINAL_FOLDER_NAME
                         elif document == "no_stopwords":
                             document_path = STOPWORD_FOLDER_NAME
@@ -108,49 +133,54 @@ if __name__ == "__main__":
                             print("Invalid document name")
                             exit()
                         if query:
-                            queries,operation = check_operation(query)
+                            queries, operation = check_operation(query)
                             if type(queries) == list:
-                                document_query=[]
-                                if search_mode=="linear":
+                                document_query = []
+                                if search_mode == "linear":
                                     for search_query in queries:
-                                        documents = linear_search(document_path,search_query)
+                                        documents = linear_search(document_path, search_query)
                                         document_query.append(documents)
-                                elif search_mode=="inverted":
-                                    document_query = inverted_search(document_path,queries)
-                                if operation=="&":
-                                    documents =set(document_query[0]).intersection(*document_query)
-                                elif operation=="|":
-                                    documents =set().union(*document_query)
-                                elif operation=="~":
-                                    #get all documents
-                                    all_document_names =get_all_document_names(ORIGINAL_FOLDER_NAME)
+                                elif search_mode == "inverted":
+                                    document_query = inverted_search(document_path, queries)
+                                if operation == "&":
+                                    documents = set(document_query[0]).intersection(*document_query)
+                                elif operation == "|":
+                                    documents = set().union(*document_query)
+                                elif operation == "~":
+                                    # get all documents
+                                    all_document_names = get_all_document_names(ORIGINAL_FOLDER_NAME)
                                     documents = zip(*document_query)
-                                    documents = list(set(all_document_names)-set(documents))
+                                    documents = list(set(all_document_names) - set(documents))
 
                             else:
-                                if search_mode=="linear":
-                                    documents = linear_search(document_path,query)
-                                elif search_mode=="inverted":
-                                    documents = inverted_search(document_path,[query])
-                            
+                                if search_mode == "linear":
+                                    documents = linear_search(document_path, query)
+                                elif search_mode == "inverted":
+                                    documents = inverted_search(document_path, [query])
+
                             print_documents(documents)
+
+                            # Load ground truth
+                            ground_truth = load_ground_truth(GROUND_TRUTH_FILE)
+
+                            # Calculate precision and recall
+                            precision, recall = calculate_precision_recall(documents, ground_truth)
+                            print(f"P={precision},R={recall}")
+
                         else:
-                            print("No query.Please enter query")
+                            print("No query. Please enter a query")
                             exit()
                     else:
-                        print("No Document specified")
+                        print("No document specified")
                         exit()
 
                 else:
-                    print("No model specified / Invalid Model Specified")
+                    print("No model specified / Invalid model specified")
                     exit()
 
-        else:
-            print("No Search Mode specified / Invalid Search Mode Specified")
+            else:
+                print("No search mode specified / Invalid search mode specified")
 
     end_time = time.time()
     execution_time = (end_time - start_time) * 1000
     print(f"T:{execution_time} ms")
-
-
-
