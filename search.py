@@ -1,6 +1,7 @@
 
 import os
 from utils import *
+from string import punctuation
 
 def read_collection(collection_name):
     collection={}
@@ -9,7 +10,10 @@ def read_collection(collection_name):
         fable_text = get_file_contents(os.path.join(collection_name,filename))
         fable_text = [sentence.replace('\n','') for sentence in fable_text]
         document = " ".join(fable_text).lower().split()
-        collection[filename]=document
+        new_document=[]
+        for word in document:
+            new_document.append(word.strip(punctuation))
+        collection[filename]=new_document
     return collection
 
 def linear_search(collection_name,search_term):

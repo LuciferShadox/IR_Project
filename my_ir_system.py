@@ -83,7 +83,7 @@ if __name__ == "__main__":
         help='specifies the query text to search',
     )
     args = parser.parse_args()
-    query =args.query
+    query =args.query.lower()
     # print(args.stemming)
     if args.stemming:
         ps = PorterStemmer()
