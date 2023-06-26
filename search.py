@@ -16,12 +16,12 @@ def read_collection(collection_name):
         collection[filename]=new_document
     return collection
 
-def linear_search(collection_name,search_term):
+def linear_search(collection_name, search_term):
     results = []
     collection = read_collection(collection_name)
-    for filename,document in collection.items():
+    for filename, document in collection.items():
         for word in document:
-            if search_term in word:
+            if search_term.lower() in word.lower():
                 results.append(filename)
                 break
     return results
@@ -32,12 +32,8 @@ def inverted_search(collection_name, search_terms):
     inverted_index = build_inverted_index(collection_name)
     matching_docs = []
     for term in search_terms:
-        if term in inverted_index:
-            matching_docs.append(inverted_index[term])
-    # for filename in matching_docs:
-    #     document = collection.get(filename, [])
-    #     if all(term in document for term in search_terms):
-    #         results.append(filename)
+        if term.lower() in inverted_index:
+            matching_docs.append(inverted_index[term.lower()])
     return matching_docs
 
 def build_inverted_index(collection_name):
@@ -45,8 +41,9 @@ def build_inverted_index(collection_name):
     collection = read_collection(collection_name)
     for filename, document in collection.items():
         for word in document:
-            if word not in inverted_index:
-                inverted_index[word] = [filename]
-            elif filename not in inverted_index[word]:
-                inverted_index[word].append(filename)
+            lower_word = word.lower()
+            if lower_word not in inverted_index:
+                inverted_index[lower_word] = [filename]
+            elif filename not in inverted_index[lower_word]:
+                inverted_index[lower_word].append(filename)
     return inverted_index
