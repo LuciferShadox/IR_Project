@@ -82,7 +82,7 @@ def check_operation(query):
         queries=query.split("|")
         return queries,operation
     elif "~" in query:    
-        return query.split("~"),"~"
+        return query.split("~")[1:],"~"
     
     return query,None
 

@@ -77,7 +77,8 @@ def search_documents(query_vector, document_vectors, documents, top_k=10):
     # Get the indices of the top-k most similar documents
     top_indices = similarities.argsort()[0][::-1][:top_k]
     # Retrieve the top-k documents along with their similarity scores
-    results = [(documents[i], similarities[0, i]) for i in top_indices]
+    # results = [(documents[i], similarities[0, i]) for i in top_indices]
+    results = [documents[i] for i in top_indices]
     return results
 
 # #vector Space Search
@@ -140,6 +141,7 @@ def build_query_vector(query, vocabulary):
 def vector_space_model(collection_name,search_term):
     
     collection = read_collection(collection_name)
+    document_names = list(collection.keys())
     documents = list(collection.values())
     # Step 2: Build the document-term matrix
     document_term_matrix, vocabulary = build_document_term_matrix(documents)
@@ -150,12 +152,10 @@ def vector_space_model(collection_name,search_term):
     # Step 6: Preprocess the query and construct the query vector
     query_vector = build_query_vector(search_term, vocabulary)
     top_k = 10
-    results = search_documents(query_vector, tf_idf, documents, top_k)
+    results = search_documents(query_vector, tf_idf, document_names, top_k)
     # Print the search results
-    for document, similarity in results:
-        print(f"Document: {document}  Similarity: {similarity}")
+    return results
 
 
-
-#if __name__=="__main__":
-vector_space_model("collection_original","wolf")
+if __name__=="__main__":
+    vector_space_model("collection_original","wolf")

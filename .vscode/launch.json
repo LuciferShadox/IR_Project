@@ -11,7 +11,7 @@
             "program": "my_ir_system.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--query","hunters","--model","bool","--search-mode","inverted","--documents","original"],
+            "args": ["--query","~wolf","--model","bool","--search-mode","vector","--documents","original"],
         },
         
     ]

@@ -1,6 +1,6 @@
 import argparse
 from utils import *
-from search import linear_search,inverted_search
+from search import linear_search,inverted_search,vector_space_model
 from stemming import PorterStemmer
 import time
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--search-mode",
-        help="Only Linear mode is available \"linear\"(other modes will be implemented in a later task)",
+        help="There are 2 search modes linear or inverted",
     )
     parser.add_argument(
         "--documents",
@@ -119,6 +119,10 @@ if __name__ == "__main__":
                                         document_query.append(documents)
                                 elif search_mode=="inverted":
                                     document_query = inverted_search(document_path,queries)
+                                elif search_mode=="vector":
+                                    for search_query in queries:
+                                        documents =  vector_space_model(document_path,search_query)
+                                        document_query.append(documents)
                                 if operation=="&":
                                     documents =set(document_query[0]).intersection(*document_query)
                                 elif operation=="|":
@@ -134,6 +138,8 @@ if __name__ == "__main__":
                                     documents = linear_search(document_path,query)
                                 elif search_mode=="inverted":
                                     documents = inverted_search(document_path,[query])[0]
+                                elif search_mode=="vector":
+                                    documents =  vector_space_model(document_path,query)
                             
                             print_documents(documents)
                         else:
